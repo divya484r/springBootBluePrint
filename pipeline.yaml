@@ -1,0 +1,303 @@
+# Version of the application schema
+version: 1
+
+application:
+  name: springbootsampleapp
+
+  # {rest | camel | jar | plugin}
+  type: rest
+
+  qmaProduct: springbootsampleapp
+  description: Provides springbootsampleapp capabilities
+  owner: [your_team_name]
+  email: [your_email_address]
+  team: sample
+  scmProjectKey: sample
+  scmRepositoryKey: springbootsampleapp
+  classification: Bronze
+
+  # REQUIRED
+  relayProjectCode: blueprint
+  costcenter:  [costcenter]
+  owner:application: springbootsampleapp
+  owner:domain: ship
+
+  owner:department: [your_team_department]
+
+deployment:
+  jenkinsBaseUrl:
+
+  test:
+    group: Commerce
+
+    # {Standalone Application | Web Application | Web Service}
+    type: Web Service
+
+    product: springbootsampleapp
+    tags:
+
+    # {none | application | cluster}
+    monitorBucketType: cluster
+
+    pagerDutyAPIKey:
+
+    # Cluster configuration
+    cooldownInSeconds: 10
+    azRebalance: true
+    healthCheckGracePeriod: 600
+
+    # {EC2 | ELB}
+    healthCheckType: EC2
+
+    # {Default | OldestInstance, NewestInstance, OldestLauchConfiguration, ClosestToNextInstanceHour}
+    instanceTerminationPolicy: Default
+
+    trafficAllowedAtStartup: true
+    asgardServerUrl: https://asgard-vpc1-test.test.commerce.samplecloud.com
+    asgardAuthenticationMechanism: OneLogin
+    asgardOneLoginAppId: 450740
+
+    asg:
+      vpc: vpc1
+      min: 1
+      max: 1
+      desiredCapacity: 1
+      canaryCapacity: 1
+      # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
+      region:
+        -
+          name: us-east-1
+          availabilityZones:
+            - us-east-1b
+            - us-east-1d
+            - us-east-1e
+    launchConfiguration:
+      instanceType: m3.medium
+      sshKeyName: [asgardSSHKey]
+      #trafficMode: [experience|...]
+    #iamInstanceProfile: [profile...]
+  prod:
+    group: Commerce
+    type: Web Service
+    product: springbootsampleapp
+    tags:
+    monitorBucketType: cluster
+    pagerDutyAPIKey:
+    cooldownInSeconds: 10
+    azRebalance: true
+    healthCheckGracePeriod: 600
+    healthCheckType: EC2
+    instanceTerminationPolicy: Default
+    trafficAllowedAtStartup: true
+    asgardServerUrl: https://asgard-vpc1-prod.prod.commerce.samplecloud.com
+    asgardAuthenticationMechanism: OneLogin
+    asgardOneLoginAppId: 450738
+    asg:
+      vpc: vpc1
+      min: 1
+      max: 1
+      desiredCapacity: 1
+      canaryCapacity: 1
+      region:
+        -
+          name: us-east-1
+          availabilityZones:
+            - us-east-1b
+            - us-east-1c
+            - us-east-1e
+    launchConfiguration:
+      instanceType: m3.medium
+      sshKeyName: [asgardSSHKey]
+      #trafficMode: [experience|...]
+    #iamInstanceProfile: [profile...]  
+
+#servicenow:
+#  changeRequestNumber: [CHGxxxxxx]
+#  isPCI: "No"
+
+canary:
+  aws:
+    region: us-east-1
+    asgName: springbootsampleapp
+
+  #cloudwatch:
+    # AWS Region to collect cloudwatch events from
+  #  region: us-east-1
+    # List of cloudwatch alarms to capture
+  #  events:
+  #  - alarm-1736
+  #  - alarm-3010
+
+  cloudwatchmetrics:
+    fileprefix: cloudwatch-metric
+    period: 300
+    metrics:
+      - CPUUtilization:
+          productType: AWS/EC2
+          submetrics:
+            - Minimum
+            - Maximum
+            - Average
+  #        dimensions:
+  #          InstanceId: i-03511c9b2fc9d40f4
+
+  # Specific options for the New Relic collector
+  newrelic:
+    # File prefix used when persisting data to files
+    filePrefix: newrelic-metric
+    # Resource used to contact New Relic
+    newRelicURI: api.newrelic.com/v2
+    # Application name for the canary application
+    canaryAppName: springbootsampleapp
+    # Application name for the control application
+    controlAppName: springbootsampleapp
+    # List of metrics to aggregate from New Relic
+    metrics:
+      - Apdex
+      - CPU/User Time
+      - Errors/all
+
+pipeline:
+  name: gradle-java-microservice
+  jenkins:
+    url: https://[your_brewmaster].auto.samplecloud.com/
+    folder: sample/springbootsampleapp
+  profiles:
+    - commerce
+    - commerce-tagging
+    - springboot/commerce
+    # CR request pipeline jobs
+    #- servicenow
+  parameters:
+    deploymentConfig: &deploymentConfig pipeline.yaml
+    qualityConfig: pipeline.yaml # location of QT plugin quality configuration
+    region: us-east-1
+    jdkName: JDK8
+    #slackIntegrationToken: xxxxxxxxxxxxxxxxxxxxxxxx     # OPTIONAL, this token posts to the #ce-athena-buildstatus Slack channel. Other team tokens are pinned to their Slack channels.
+                                                         # For a new channel integration token, create a BAAT ticket such as BAAT-1914.
+    # disable credentials for tagging until QMA fixes issue:
+    # https://jira.sample.com/browse/ACOE-6211
+    #    scmCredentials: 351b33af-0e13-4351-b0d5-74abe6d05790
+    cloudwatch: true
+    cloudwatchmetrics: true
+    autoDiscoverInstanceIds: true
+    autoDiscoverHostNames: true
+    newrelic:
+      product:
+        apm: false
+        apmInstance: true
+        mobile: false
+        server: false
+        host: false
+    splunk:
+      type:
+        event: false
+        statistic: false
+        summary: false
+  dslFiles:
+    ami:
+      parameters:
+        baseAmiName: base-ubuntu1404-jdk18-ami-signalfx
+        springbootBranch: feature/DTCA-2054-signalfx
+    deployTestBegin:
+      parameters:
+        pass: canaryAnalysis
+        candidateBegin: war
+    canaryAnalysis:
+      name: Test/03.1_(TEST)_canary-analysis
+      location: https://bitbucket.sample.com/scm/keystone_jobs/canary-analysis.git
+      version: 477ec889b02
+      parameters:
+        defaultBranch: master                                   # Which branch to build from
+        configLocation: *deploymentConfig                       # The YAML file containing a canary section
+        featureLocation: src/main/resources/canary              # A directory containing feature files with canary rulesets in them
+        cloudWatchAlarms: false                                 # Collect data from CloudWatch Alarms?
+        cloudWatchMetrics: true                                 # Collect data from CloudWatch Metrics?
+        region: us-east-1                                       # AWS Region for CloudWatch data collection
+        awsAccount: 233367263614                                # AWS Account Number for CloudWatch data collection
+        awsRole: readonly                                       # AWS IAM Role for CoudWatch data collection
+        nrApiKeyType: TEST                                      # Either TEST or PROD for which New Relic account to use
+        asgPartialName: springbootsampleapp                                   # The beginning portion of the ASG name for your service, e.g. samplemicroservice-d0test
+        fromDate: "two hours ago"                               # "Natural Language" date to set the start of the canary analysis time window
+        toDate: "now"                                           # "Natural Language" date to set the end of the canary analysis time window
+        enableCanaryAnalysis: true
+        upstream: deployTestBegin
+        pass: deployTestFinish
+        failed: deployTestRollback
+    integrationTest:
+      name: Test/03.3_(TEST)_integration-test
+      parameters:
+        enableIntegrationTest: true
+        useQtPlugin: true
+        phase: component
+        candidateBegin: war
+        closeQtOnSuccess: true
+    pra:
+      parameters:
+        useQTPra: true
+        buildTask: build jacocoTestReport fortifyScan pitest
+    war:
+      parameters:
+        artifactGlob: "*.jar, candidate-env-var.txt"
+        buildTask: build jacocoTestReport fortifyScan pitest
+        useQtPlugin: true
+        closeQtOnSuccess: false
+
+# The Jenkins QT plugin has replaced the previous gradle plugin. See https://bitbucket.sample.com/projects/SQA/repos/jenkins-qt-plugin/browse/docs/QtConfigFile.md
+# for documentation on the quality config.
+#
+# If desired this configuration can be externalized from pipeline.yaml by updating the pipeline.parameters.qualityConfig parameter.
+#
+# Each of these reports has default rules applied by QMA to determine if a project should pass or fail. These rules can
+# be controlled by creating a rule file as described at https://bitbucket.sample.com/projects/SQA/repos/qma-analyzer/browse and
+# pointing a report to the rule file ({rack}.feature) with the pathToMetricsRules parameter. For example for custom jacoco
+# rules create a jacoco.feature file at `quality/jacoco.feature` and set the junit racks pathToMetricsRules parameter to
+# `quality/jacoco.feature`
+quality:
+  profiles:
+    default:
+      reports:
+        - format: junit
+          outputLocations:
+          - build/test-results/test/**
+          artifacts:
+          - build/test-results/test/**, build/reports/test/**/*
+          mainArchivalFile: build/reports/test/index.html
+        - format: jacoco
+          outputLocations:
+          - build/reports/jacoco/test/jacocoTestReport.xml
+          artifacts:
+          - build/reports/jacoco/**/*
+          mainArchivalFile: build/reports/jacoco/index.html
+        - format: pit
+          outputLocations:
+          - build/reports/pit/mutations.xml
+          artifacts:
+          - build/reports/pit/**/*
+          mainArchivalFile: build/reports/pit/index.html
+        - format: checkstyle
+          outputLocations:
+          - build/reports/checkstyle/main.xml
+          artifacts:
+          - build/reports/checkstyle/*
+          mainArchivalFile: build/reports/checkstyle/main.html
+        - format: pmd
+          outputLocations:
+          - build/reports/pmd/main.xml
+          artifacts:
+          - build/reports/pmd/*
+          mainArchivalFile: build/reports/pmd/main.html
+        - format: fortify
+          outputLocations:
+          - build/reports/fortify/fortify.xml
+          artifacts:
+          - build/reports/fortify/*
+          mainArchivalFile: build/reports/fortify/fortify.pdf
+    component:
+      reports:
+        - format: junit
+          outputLocations:
+          - build/test-results/integrationTest/**
+          artifacts:
+          - build/test-results/integrationTest/**, build/reports/integrationTest/**/*
+          mainArchivalFile: build/reports/integrationTest/index.html

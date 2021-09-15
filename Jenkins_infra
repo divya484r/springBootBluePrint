@@ -1,0 +1,186 @@
+#!groovy
+@Library(['cicd-pipeline','cop-pipeline-step']) _
+
+def config = [
+        usePraDispatch       : false,
+
+        tags                 : [
+                'Name'             : 'springbootsampleapp',
+                'sample-application' : 'springbootsampleapp',
+                'classification'   : 'bronze',
+                'costcenter'       : '105129',
+                'email'            : 'Lst-CE.sample@sample.com',
+                'owner'            : 'mp-sample',
+                'owner:application': 'sample-' + 'springbootsampleapp',
+                'owner:domain'     : 'fulfillment',
+                'sample-department'  : 'gfls',
+                'sample-domain'      : 'outbound logistics management'
+        ],
+
+        deploymentEnvironment: [
+     //CREATING CACHES FOR AFSSAPADAPTOR
+
+                // AFSSAPADAPTOR Product details Cache
+
+                AfsProductDetailCacheTest       : [
+                        deployFlow: [
+                                TEST_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure'],
+                        ],
+                        wingtips.aws       : [
+                                awsRole  : "mp-deploy",
+                                accountId: "233367263614",
+                                region   : "us-east-1",
+                        ],
+                        cf        : [
+                                stackName   : "mp-ship-afssap-product-detail-cache-test-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-product-detail.yaml",
+                        ],
+                        tags      : [
+                                'sample-environment': 'test',
+                        ]
+                ],
+
+                AfsProductDetailCacheProd       : [
+                        deployFlow      : [
+                                PROD_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure'],
+                        ],
+                        wingtips.aws             : [
+                                awsRole  : "mp-deploy",
+                                accountId: "538734628834",
+                                region   : "us-east-1",
+                        ],
+                        cf              : [
+                                stackName   : "mp-ship-afssap-product-detail-cache-prod-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-product-detail.yaml",
+                        ],
+                        cloudEnvironment: 'prod',
+                        tags            : [
+                                'sample-environment': 'prod',
+                        ],
+                ],
+
+
+     // CREATING QUEUES AND DLQS FOR AFSSAPADAPTOR
+
+                //queue and dlq for confirm route
+                AfsShipconfirmSQSTest     : [
+                        deployFlow: [
+                                TEST_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure']
+
+                        ],
+                        wingtips.aws       : [
+                                awsRole  : "mp-deploy",
+                                accountId: "233367263614",
+                                region   : "us-east-1",
+                        ],
+                        cf        : [
+                                stackName   : "mp-ship-afssap-shipconfirm-queue-test-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-shipconfirm.yaml",
+                        ],
+
+                        tags      : [
+                                'sample-environment': 'test',
+                        ],
+                ],
+                AfsShipconfirmSQSProd     : [
+                        deployFlow: [
+                                PROD_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure']
+
+                        ],
+                        wingtips.aws       : [
+                                awsRole  : "mp-deploy",
+                                accountId: "538734628834",
+                                region   : "us-east-1",
+                        ],
+                        cf        : [
+                                stackName   : "mp-ship-afssap-shipconfirm-queue-prod-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-shipconfirm.yaml",
+                        ],
+
+                        tags      : [
+                                'sample-environment': 'prod',
+                        ],
+                ],
+
+                //creating queue and dlq for cancel route
+                AfsShipcancelSQSTest     : [
+                        deployFlow: [
+                                TEST_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure']
+
+                        ],
+                        wingtips.aws       : [
+                                awsRole  : "mp-deploy",
+                                accountId: "233367263614",
+                                region   : "us-east-1",
+                        ],
+                        cf        : [
+                                stackName   : "mp-ship-afssap-shipcancel-queue-test-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-shipcancel.yaml",
+                        ],
+
+                        tags      : [
+                                'sample-environment': 'test',
+                        ],
+                ],
+                AfsShipcancelSQSProd     : [
+                        deployFlow: [
+                                PROD_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure']
+
+                        ],
+                        wingtips.aws       : [
+                                awsRole  : "mp-deploy",
+                                accountId: "538734628834",
+                                region   : "us-east-1",
+                        ],
+                        cf        : [
+                                stackName   : "mp-ship-afssap-shipcancel-queue-prod-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-shipcancel.yaml",
+                        ],
+
+                        tags      : [
+                                'sample-environment': 'prod',
+                        ],
+                ],
+
+                //queue and dlq for posting to nsp
+                AfsPosttonspSQSTest: [
+                        deployFlow: [
+                                TEST_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure']
+                        ],
+                        wingtips.aws       : [
+                                awsRole  : "mp-deploy",
+                                accountId: "233367263614",
+                                region   : "us-east-1"
+                        ],
+                        cf        : [
+                                stackName   : "mp-ship-afssap-posttonsp-queue-test-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-post-to-nsp.yaml",
+                        ],
+                        tags      : [
+                                'sample-environment': 'test',
+                        ],
+                ],
+
+                AfsPosttonspSQSProd: [
+                        deployFlow: [
+                                PROD_INFRASTRUCTURE: ['Archive Current State', 'Deploy Infrastructure']
+                        ],
+                        wingtips.aws       : [
+                                awsRole  : "mp-deploy",
+                                accountId: "538734628834",
+                                region   : "us-east-1"
+                        ],
+                        cf        : [
+                                stackName   : "mp-ship-afssap-posttonsp-queue-prod-infra",
+                                templateFile: "cloudformation/templates/mp-ship-afssap-post-to-nsp.yaml",
+                        ],
+                        tags      : [
+                                'sample-environment': 'prod',
+                        ],
+                ],
+
+
+        ]
+]
+
+cloudformationPipeline(config)

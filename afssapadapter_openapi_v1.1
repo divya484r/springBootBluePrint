@@ -1,0 +1,159 @@
+openapi: 3.0.1
+info:
+  title: sample Change for SAP
+  contact:
+    name: sample Team
+    email: Lst-sample@sample.com
+  version: '1.0'
+  description: This API will be used to publish ship confirmation and ship cancel event for Product finder DCs.There is no REST APIs here.
+  
+paths:
+  /ship/afssap/v1:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/xml; charset=UTF-8:
+            schema:
+             $ref: "#/components/schemas/sampleStatus"
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            application/xml; charset=UTF-8:
+              schema:
+                $ref: "#/components/schemas/Error400"
+        "403":
+          description: Forbidden
+        "401":
+          description: Unauthorized
+        "200":
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+              description: OK
+components:
+  schemas:
+    
+   Error400:
+    xml:
+      name: "Message"
+    properties:
+      ErrorCode:
+        description:  A machine readable string of what happened.
+        enum:
+        - INVALID_VALUE
+        - MISSING_REQUIRED
+        - UNRECOGNIZED_PROPERTY
+        - NO_RECORDS_FOUND
+        type: string
+        xml:
+          attribute: true
+        example: "MISSING_REQUIRED"
+   sampleStatus:
+    type: object
+    properties:
+                  sampleRequestNumber:
+                    description: Purchase Order Number which was sent in ShipRequest.
+                    type: string
+                    example: 'EO1154350003'
+                  messageID:
+                    description: uniqueID to distinguish from duplicate postings.
+                    type: string
+                    example: 'dc51403f-911b-4d3d-a065-a5e0a0afadac'
+                  transactionDate:
+                    description: Date format - ISO 8601 format.
+                    type: string
+                    example: '2021-07-22T06:33:52Z'
+                  orderType:
+                    description: Type of the Order, present in Ship Request
+                    type: string
+                    enum:
+                    - PURCHASE_ORDER
+                    - RETURN_ORDER
+                    - SALES_ORDER
+                    - TRANSFER_ORDER
+                  sellerOrganizationCode:
+                    description: sample Geo associated to the return order
+                    type: string
+                    enum:
+                    - sampleUS
+                    - sampleEUROPE
+                    - sampleJP
+                    - sampleCN
+                    - sampleXA
+                    - sampleGS
+                  shipFromLocation:
+                    description: Shipping location
+                    example: '1060_GA'
+                  creationDate:
+                    description: Date format - ISO 8601 format
+                    type: string
+                    format: date-time
+                  customerOrderNumber:
+                    description: Customer sales order which was sent in ShipRequest
+                    type: string
+                    example: 'EO154534536'
+                  transactionReference:
+                    description: Reference number for this Transaction
+                    type: string
+                    example: 'dc51403f-911b-4d3d-a065-a5e0a0afadac'
+                  lines:
+                    description: Reference number for this Transaction
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        line:
+                          type: object
+                          xml:
+                            name: 'line'
+                          properties:
+                            orderLineKey:
+                                description: Map OrderLineKey for ShipRequest
+                                type: string
+                                example: '202107211642491406909710'
+                            lineNumber:
+                                description: Unique identifier used to identify the OrderLine
+                                type: string
+                                example: '1'
+                            orderLineStatus:
+                                description: Shipment Status
+                                type: string
+                                example: 'SHIPPED'
+                                enum:
+                                - SHIPPED
+                                - CANCELLED
+                            universalProductCode:
+                                description: Universal Product Code
+                                type: number
+                                example: '0001233453494'
+                            confirmedQuantity:
+                                description: Shipped Quantity
+                                type: number
+                                example: '1.0'
+                            rejectedQuantity:
+                                description: Cancelled Quantity
+                                type: number
+                                example: '0.0'
+                            
+                            sizeCode:
+                                description: A set of alphanumeric characters which, within a Master Size Grid, uniquely identifies one of a series of graduated dimensions by which manufactured inventory is classified, prior to any translation into international sizing equivalents. A conventional relative measure of dimension, as for Footwear, Gloves, Apparel, and other articles made up for sale.
+                                type: string
+                                example: 'S'
+                            productCode:
+                                description: Derived in NDF as the First Quality GTIN which is currently assigned to the Product SizeA set of alphanumeric characters, comprised of the concatenation of a Style Code and Colorway Code, that uniquely identifies a specific sample shoe, garment or equipment item as differentiated by color. Product Code is used both internally and externally. It is different from Product Identifier, an unstructured numeric value which is assigned immediately upon creation of the record for a new Product. Structure of affiliates' Product Code may be different. Third party alphanumeric Product Codes may match and conflict with sample Product Codes in some instances
+                                type: string
+                                example: '542367-010'
+                    required:
+                    - productCode
+                    - orderLineStatus
+    required:
+    - messageID
+    - sampleRequestNumber
+    
+                    
+                    
+                    

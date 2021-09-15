@@ -1,0 +1,189 @@
+buildscript {
+    ext {
+        // buildscript dependency versions
+        piTestCommandLineVersion = '1.1.11'
+        piTestGradlePluginVersion = '1.3.0'
+        springBootVersion = '2.2.5.RELEASE'
+        hystrixMetricsVersion = "1.4.13"
+        httpAsyncClientVersion = "4.1.2"
+
+
+        // project dependency versions
+        backstopperVersion = '0.11.3'
+        disruptorVersion = '3.3.6'
+        springCloudVersion = 'Hoxton.SR3'
+
+        spindleSpringVersion = '15.0.2.+'
+        jwtCommonSpringbootVersion = '4.0.2.0'
+        backstopperInternalVersion = "5.0.2.+"
+
+        // test dependency versions
+        assertjVersion = '3.8.0'
+        mockitoVersion = '2.8.47'
+        restAssuredVersion = '3.0.3'
+
+
+        futureConverterVersion='1.1.0'
+        tracingVersion = '1.0.2'
+
+        // project dependency versions
+        mpArtemisLibrariesVersion = '2.5.+'
+
+        camelVersion = '2.22.+'
+    }
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+    }
+    apply from: file('gradle/buildscript.gradle'), to: buildscript
+}
+
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'idea'
+    id 'io.freefair.lombok' version '5.3.0'
+    id 'com.github.spotbugs' version '4.6.0' apply false
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'org.springframework.boot' version '2.2.5.RELEASE'
+}
+
+def flow = System.getenv("Flow")
+
+if (flow && "DEV_FAST_DEPLOY" == flow) {
+    apply from: file('gradle/fastcheck.gradle')
+} else {
+    apply from: file('gradle/fastcheck.gradle')
+    apply from: file('gradle/check.gradle')
+}
+
+eclipse {
+    classpath {
+        containers.remove('org.eclipse.jdt.launching.JRE_CONTAINER')
+        containers 'org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11'
+    }
+}
+
+compileJava {
+    options.compilerArgs << '-Xlint:unchecked'
+    options.fork = true
+}
+
+compileTestJava {
+    options.compilerArgs << '-Xlint:deprecation'
+    options.fork = true
+}
+
+project.tasks.create("versionInfo", {
+    def buildNumber = System.getenv("BUILD_NUMBER") ?: 0
+    project.ext.releaseVersion = version + '.' + buildNumber
+})
+
+configurations {
+    compile.exclude group: 'ch.qos.logback'
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+}
+
+
+processResources {
+    expand(project.properties)
+    dependsOn versionInfo
+}
+jar {
+    dependsOn versionInfo
+    archiveBaseName.set(artifactId)
+    archiveVersion.set(releaseVersion)
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+repositories {
+    // Use -PuseMavenLocal=true to enable
+    if (project.hasProperty("useMavenLocal")) {
+        // DO NOT put mavenLocal() in the general area as an always-available option.
+        // It will sometimes fail your builds with bizarre errors.
+        mavenLocal()
+    }
+
+    mavenCentral()
+    maven {
+        credentials {
+            username 'maven'
+            password 'ludist'
+        }
+        url 'https://artifactory.com/artifactory/all-repos'
+    }
+}
+
+dependencies {
+
+    // Spring dependencies
+    compile("org.springframework.boot:spring-boot-starter-actuator")
+    //annotationProcessor("org.springframework.boot:spring-boot-starter-log4j2")
+    compile("org.springframework.boot:spring-boot-starter-log4j2")
+    compile("org.springframework.boot:spring-boot-starter-undertow")
+    compile("org.springframework.boot:spring-boot-starter-web")
+    compile("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client")
+    // Third-party dependencies
+    compile("com.lmax:disruptor:${disruptorVersion}")
+    compile("org.springframework.cloud:spring-cloud-starter-netflix-hystrix")
+
+
+
+    compile "com.netflix.hystrix:hystrix-metrics-event-stream:${hystrixMetricsVersion}"
+    compile ("org.apache.httpcomponents:httpasyncclient:${httpAsyncClientVersion}")
+
+
+
+    //camel dependencies
+    compile("org.apache.camel:camel-spring-boot-starter:${camelVersion}")
+    compile("org.apache.camel:camel-http4-starter:${camelVersion}")
+    compile("org.apache.camel:camel-http:${camelVersion}")
+    compile("org.apache.camel:camel-wingtips.aws:${camelVersion}")
+    compile("org.apache.camel:camel-hystrix-starter:${camelVersion}")
+    compile("org.apache.camel:camel-jaxb:${camelVersion}")
+
+    compile ('jakarta.xml.bind:jakarta.xml.bind-api:2.3.2')
+    compile("org.redisson:redisson:3.11.0")
+
+    // Test dependencies
+
+    testCompile("org.assertj:assertj-core:${assertjVersion}")
+    testCompile("org.mockito:mockito-core:${mockitoVersion}")
+    testAnnotationProcessor("org.springframework.boot:spring-boot-starter-log4j2")
+    testCompile("org.springframework.boot:spring-boot-starter-test")
+
+    testCompile("io.rest-assured:rest-assured:${restAssuredVersion}")
+
+
+
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+// Can't be done from check.gradle as the task is dynamically created and only exists in this scope.
+spotbugsIntegrationTest.enabled = false
+
+springBoot {
+    mainClassName = "com.sample.${artifactId}.Application"
+}
+
+
+tasks.withType(Test) {
+    jvmArgs = ['-Dspring.profiles.active=local', '-Dlog4j.configurationFile=log4j2-local.xml']
+}
+
+bootRun {
+    jvmArgs = ['-Dspring.profiles.active=local', '-Dlog4j.configurationFile=log4j2-local.xml']
+}

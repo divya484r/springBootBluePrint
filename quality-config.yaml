@@ -1,0 +1,27 @@
+qualityConfig:
+  phases:
+    build:
+    - JUnit:
+        metricSource: junit
+        metricFiles:
+        - build/test-results/test/TEST-*.xml
+        reportFiles:
+        - build/reports/test/**/*
+        reportIndex: build/reports/test/index.html
+    - Checkstyle:
+        metricSource: checkstyle
+        metricFile: build/reports/checkstyle/main.xml
+        reportIndex: build/reports/checkstyle/main.html
+    - SpotBugs:
+       metricSource: findbugs
+       metricFile: build/reports/spotbugs/main.xml
+       reportFiles:
+        - build/reports/spotbugs/main.*
+       reportIndex: build/reports/spotbugs/main.html
+    - PMD:
+        metricSource: pmd
+        metricFile: build/reports/pmd/main.xml
+        reportIndex: build/reports/pmd/main.html
+    
+  application:
+    name: springbootsampleapp

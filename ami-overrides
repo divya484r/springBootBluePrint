@@ -1,0 +1,6 @@
+# Provides overrides for AMI creation
+# Uncomment any of the values you wish to override
+#
+# export JVM_HEAP_MIN=
+# export JVM_HEAP_MAX=
+# export JVM_HEAP_NEW=

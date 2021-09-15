@@ -1,0 +1,210 @@
+openapi: 3.0.0
+# Read about openapi v3 specification at https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md
+# Read about sample's API specification at https://confluence.sample.com/display/NEA/API+Standards
+#
+# This api specification is a simplified version from the API Standard's templates. Complete templates are available at
+# https://confluence.sample.com/display/NEA/OpenAPI+v3+Templates
+
+servers:
+- url: 'https://api.sample.com'
+  description: Production Environment
+- url: 'https://experience.test.commerce.samplecloud.com'
+  description: Test Environment
+info:
+  description: This API is responsible for providing springbootsampleapp capabilities within the ship domain
+  title: 'ship springbootsampleapp'
+  version: '0.1'
+  contact:
+      email: '[your_team_email]'
+paths:
+  /ship/springbootsampleapp/v1:
+    get:
+      tags:
+      - Resources
+      parameters:
+      - description: Name of the fields to be returned, comma separated. If not specified, all fields will be returned.
+        in: query
+        name: fields
+        required: false
+        schema:
+          type: string
+      - description: Number of results to return. Defaults to 25.
+        in: query
+        name: count
+        required: false
+        schema:
+          type: integer
+      - description: Anchor from where the results should start
+        in: query
+        name: anchor
+        required: false
+        schema:
+          type: string
+      - description: "List of conditions to filter by.\n\n+ `filter1` (required/optional) description - example\n\n+ `filter2` (required/optional) description - example"
+        in: query
+        name: filter
+        required: false
+        schema:
+          type: string
+      - description: Field name and direction to sort by.
+        in: query
+        name: sort
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json; charset=UTF-8:
+              schema:
+                $ref: '#/components/schemas/MultipleResponse'
+              example:
+                $ref: '#/components/examples/Example'
+        '400':
+          description: Bad Request
+          content:
+            application/json; charset=UTF-8:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+  /ship/springbootsampleapp/v1/{id}:
+    get:
+      tags:
+      - Resources
+      parameters:
+      - description: 'id of the resource'
+        in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - description: Name of the fields to be returned, comma separated. If not specified, all fields will be returned.
+        in: query
+        name: fields
+        required: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json; charset=UTF-8:
+              schema:
+                $ref: '#/components/schemas/SingleResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json; charset=UTF-8:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+components:
+  examples:
+    Example:
+      summary: Example of a successful response
+      value: {
+        'pages': {
+
+        },
+        'objects': [
+          {
+            'id': 'b29ba412-0007-4e91-bc6a-8c931da987da',
+            'resourceType': 'ship/springbootsampleapp',
+            'resourceVersion': 'v1'
+          }
+        ]
+      }
+  schemas:
+    SingleResponse:
+      required:
+      - id
+      - resourceType
+      - resourceVersion
+      properties:
+        id:
+          type: string
+          description: identifier for a given record
+          example: 'b29ba412-0007-4e91-bc6a-8c931da987da'
+        resourceType:
+          type: string
+          description: Constant that identifies the type of this resource
+          example: 'ship/springbootsampleapp'
+        resourceVersion:
+          type: string
+          description: Constant that identifies major version of this resource
+          example: 'v1'
+    MultipleResponse:
+      required:
+      - pages
+      - objects
+      properties:
+        pages:
+          type: object
+          description: Pagination information
+          properties:
+            next:
+              type: string
+              format: url
+              description: Link to next set of results
+              example: '/ship/springbootsampleapp/v1?anchor=12sd234&count25&filter=filter1(1234)'
+            prev:
+              type: string
+              description: Link to previous set of results
+              example: '/ship/springbootsampleapp/v1?anchor=34sd846&count25&filter=filter1(1234)'
+            totalPages:
+              type: integer
+              format: int32
+              description: Number of pages it would take given the current 'count' parameter to retrieve the entire query result set
+              example: 1
+            totalResources:
+              type: integer
+              format: int32
+              description: Number of resources that match the query terms regardless of the value of the 'count' parameter
+              example: 1
+        objects:
+           type: array
+           items:
+             $ref: '#/components/schemas/SingleResponse'
+    Error400:
+      properties:
+        errors:
+          description: A list of machine readable descriptions of what happened
+          items:
+            properties:
+              code:
+                description: A machine readable string of what happened
+                enum:
+                - BAD_INPUT
+                type: string
+                example: BAD_INPUT
+              field:
+                description: JSON Pointer to field that triggered the error
+                type: string
+                example: '/filter'
+              message:
+                description: A human readable description of what happened
+                type: string
+                example: 'Provided filter is not supported'
+            required:
+            - field
+            - code
+            - message
+            type: object
+          type: array
+        message:
+          description: A machine readable description of what happened
+          type: string
+          example: 'Problem found in request'
+      required:
+      - message
+      - errors
+      type: object
