@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!--
+  spotbugs (https://spotbugs.github.io/) is the current source base for findbugs
+  (http://findbugs.sourceforge.net/ or https://github.com/findbugsproject/findbugs,
+  neither of which are active).
+  findbugs is a static code analyzer that works by examining the COMPILED class files for your source code. This is in contrast
+  to pmd, for instance, that examines your program strictly at the source level.
+-->
+
+<!--
+  This file contains some false positive bugs detected by findbugs. Developers are responsible for assessing each
+  and every warning individually and to exclude them here, together with coherent explanations of why they believe each
+  warning is a false positive.
+-->
+<FindBugsFilter>
+
+    <!-- See http://findbugs.sourceforge.net/bugDescriptions.html#EI_EXPOSE_REP -->
+    <!-- This is too restrictive unless you are creating a library jar. It's good defensive practice when creating
+     an external API, but it is often cumbersome to fix and provides no value in a RESTful web service.
+     You should reconsider this if you are implementing a Java library.
+     -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-- See http://findbugs.sourceforge.net/bugDescriptions.html#EI_EXPOSE_REP2 -->
+    <!-- This is too restrictive unless you are creating a library jar. It's good defensive practice when creating
+     an external API, but it is often cumbersome to fix and provides no value in a RESTful web service.
+     You should reconsider this if you are implementing a Java library.
+     -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- See http://findbugs.sourceforge.net/bugDescriptions.html#SE_NO_SERIALVERSIONID -->
+    <!-- Does anyone still use Java serialization? -->
+    <Match>
+        <Bug pattern="SE_NO_SERIALVERSIONID"/>
+    </Match>
+
+    <!-- See http://findbugs.sourceforge.net/bugDescriptions.html#DM_NUMBER_CTOR -->
+    <!-- Reason: In recent Java compilers, "new Integer(...)" has been optimized to almost always be equivalent or faster in
+         performance to Integer.valueOf -->
+    <Match>
+        <Bug pattern="DM_NUMBER_CTOR" />
+    </Match>
+
+    <!--
+      Out of the box, the Riposte template project contains a "setup.groovy".  This file is removed when setup.groovy is itself
+      executed.  However, pull requests against *the template itself* will discover this file and attempt to run findbugs
+      against it.
+      findbugs is notoriously confused by non-Java classes, and this class is no exception.  Although a Java class should
+      indeed have a name that begins with a capital letter, this is obviously non-intuitive for a script, which is essentially
+      what setup.groovy is.  To add insult to injury, the default behavior of the pipelines and quality gates is to fail builds
+      if findbugs discovers any problems.  This is reasonable, expected and normal; findbugs is an excellent gatekeeper for
+      common programmer missteps.
+      For the simple and express purpose of silencing false positives for pull requests *on the template project*,
+      we exclude findbugs analysis on this Groovy file.  If you have already run setup.groovy, feel free to remove this pattern
+      or leave it; it does no harm in either event.
+    -->
+    <Match>
+        <Class name="setup" />
+        <!-- See http://findbugs.sourceforge.net/bugDescriptions.html#NM_CLASS_NAMING_CONVENTION -->
+        <Bug pattern="NM_CLASS_NAMING_CONVENTION" />
+    </Match>
+
+</FindBugsFilter>
