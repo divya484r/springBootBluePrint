@@ -1,0 +1,59 @@
+/*
+ * A brief discussion of spotbugs is in codequality/spotbugsexclude.xml.
+ *
+ * Two files are created by spotbugs:  build/reports/spotbugs/main.xml and
+ * build/reports/spotbugs/main.html.  Note that main.html is created by postprocessing the main.xml file.
+ *
+ * Furthermore, you probably don't want to run the spotbugsTest task.  Tests are useful because they do, well, weird things. spotbugs
+ * will notice this and give you a lot of noise that will not help your code quality.
+ */
+
+apply plugin: "com.github.spotbugs"
+
+spotbugsTest.enabled = false
+spotbugsIntegrationTest.enabled = false
+
+spotbugs {
+    ignoreFailures = false
+    reportsDir = file(project.projectDir.absolutePath + '/build/reports/spotbugs')
+    excludeFilter = file(project.projectDir.absolutePath + '/codequality/spotbugsexclude.xml')
+    effort = "max"
+}
+
+spotbugsMain {
+    reports {
+        xml.enabled = true
+        html.enabled = false
+    }
+}
+
+/**
+ * Spotbugs inherits all of the same stupidities as its progenitor, findbugs.  In particular, it will NOT generate both
+ * an XML and HTML report.
+ *
+ * To work around this, we postprocess the XML into an HTML so that developers can see why their build failed.  The XSL here
+ * is lightly massaged from one of the ones found at the findbugs site.
+ */
+task spotbugsHtml {
+    group = "Verification"
+    description = "Creates a human readable Spotbugs HTML reports"
+
+    doLast {
+        def xmlFile = file(project.projectDir.absolutePath + "/build/reports/spotbugs/main.xml")
+        if (!xmlFile.exists()) {
+            throw new GradleException("Cannot create spotbugs HTML report because the XML report could not be found: " + xmlFile.toString())
+        }
+
+        def reportsHtml = file(project.projectDir.absolutePath + "/build/reports/spotbugs/main.html")
+        def xsl = file(rootProject.projectDir.absolutePath + '/codequality/spotbugs.xsl')
+
+        ant.xslt(in: xmlFile, style: xsl, out: reportsHtml)
+    }
+}
+
+// Do a finalizedBy() to force spotbugsHtml to run even if spotbugsMain and/or spotbugsTest fails (i.e. due to spotbugs infractions in the code).
+spotbugsMain.finalizedBy(spotbugsHtml)
+// Turn off running SpotBugs against Test and IntegrationTest sourceSets
+spotbugsTest.enabled(false)
+spotbugsIntegrationTest.enabled(false)
+

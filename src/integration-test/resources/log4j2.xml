@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This file shoud improve the integration tests so that they log to the console when run from an IDE -->
+<Configuration>
+    <Appenders>
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <PatternLayout pattern="%X{traceId} %-5p %d [%t] %c app=springbootsampleapp version=${releaseVersion} : %m%n"/>
+        </Console>
+    </Appenders>
+    <Loggers>
+        <asyncLogger name="org.apache.log4j.xml" level="info"/>
+        <asyncLogger name="com.netflix" level="error"/>
+        <asyncLogger name="com.sample" level="info"/>
+
+        <asyncRoot level="info">
+            <AppenderRef ref="STDOUT"/>
+        </asyncRoot>
+    </Loggers>
+</Configuration>

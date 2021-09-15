@@ -1,0 +1,30 @@
+sourceSets {
+    integrationTest {
+        java {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+            srcDir file('src/integration-test/java')
+        }
+        resources.srcDir file('src/integration-test/resources')
+    }
+}
+
+task integrationTest (type: Test) {
+    group('verification')
+
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    // Run integration tests every time the task is invoked
+    outputs.upToDateWhen { false }
+}
+
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
+
+// Separate reports for unit vs integration tests
+tasks.withType(Test) {
+    reports.html.destination = file("${reporting.baseDir}/${name}")
+}

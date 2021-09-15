@@ -1,0 +1,39 @@
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
+apply from: file('gradle/fastcheck.gradle')
+apply from: file('gradle/integration.gradle')
+apply from: file('gradle/spotbugs.gradle')
+
+checkstyle {
+    ignoreFailures = false
+    configFile = rootProject.file("${rootDir}/codequality/checkstyle.xml")
+    sourceSets = [ project.sourceSets.main ]
+    toolVersion = "8.39"
+}
+spotbugs {
+    ignoreFailures.set(false)
+}
+
+pmd {
+    ignoreFailures = false
+    sourceSets = [ project.sourceSets.main ]
+    ruleSets = ["$rootDir/codequality/pmd-rules.xml"]
+    toolVersion = '6.30.0'
+}
+
+tasks.withType(Checkstyle) {
+    exclude '**/com/sample/phylon/**'
+    exclude '**/Application.*/**'
+    exclude '**/com.sample.ceartemis/**'
+}
+
+task checkstyleHtml {
+    group = "Verification"
+    description = "Creates a human readable Checkstyle report"
+    doLast {
+        ant.xslt(in: checkstyleMain.reports.xml.destination,
+                style: file('codequality/checkstyle-noframes-sorted.xsl'),
+                out: new File(checkstyleMain.reports.xml.destination.parent, 'main.html'))
+    }
+}
+checkstyleMain.finalizedBy checkstyleHtml

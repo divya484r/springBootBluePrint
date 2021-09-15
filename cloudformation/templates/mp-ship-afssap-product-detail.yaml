@@ -1,0 +1,49 @@
+# Marketplace Platforms Redis cache for product details lookups
+
+Conditions:
+  IsProd:
+    !Equals [ !Ref "AWS::AccountId", "538734628834" ] # commerce-prod account
+
+AWSTemplateFormatVersion: 2010-09-09
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "Security Group for afssapadaptor"
+      VpcId: !If [IsProd, "vpc-c8ef74b1", "vpc-770f0912"]
+      SecurityGroupIngress:
+        - Description: "Redis for Bronze apps"
+          IpProtocol: tcp
+          SourceSecurityGroupId: !If [IsProd, "sg-51227320", "sg-0eb8c57f"] # app-bronze in VPC1
+          FromPort: 6379
+          ToPort: 6379
+        - Description: "Redis for Internal apps"
+          IpProtocol: tcp
+          SourceSecurityGroupId: !If [ IsProd, "sg-423d6c33", "sg-72b1cc03" ] # internal-app-traffic in VPC1
+          FromPort: 6379
+          ToPort: 6379
+  Cache:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      AutomaticFailoverEnabled: true
+      CacheNodeType: !If [IsProd, "cache.m3.medium", "cache.m3.medium"]
+      # CacheParameterGroupName: !Ref CacheParamGroup
+      # CacheSubnetGroupName: !Ref SubnetGroup
+      CacheSubnetGroupName: !If [IsProd, "commerce-cache-prod-vpc1", "commerce-cache-test-vpc1"] #cache subnets in vpc 1 : prod(vpc-c8ef74b1) test (vpc-770f0912)
+      Engine: redis
+      EngineVersion: "5.0.0"
+      NumCacheClusters: !If [IsProd, 3, 2]   # 1 primary + 2replica
+      Port: 6379
+      ReplicationGroupDescription: "Redis cache for product details lookups used by afsadapter"
+      ReplicationGroupId: mp-ship-afssap-product-detail
+      SecurityGroupIds:
+        - !Ref SecurityGroup
+      SnapshotRetentionLimit: 1  # snapshots retained for 1 day
+      Tags:
+        - Key: "sample-department"
+          Value: "gfls"
+        - Key: "costcenter"
+          Value: "105129"
+        - Key: "owner"
+          Value: "mp-kratos"

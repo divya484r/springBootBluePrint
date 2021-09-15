@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Resources:
+  # SQS queue/DLQ for posting to nsp
+  AfsSapPostToNspDlq:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: mp-ship-afssap-posttonsp-dlq
+      VisibilityTimeout: 300              # Visibility Timeout, 5 minutes
+      MessageRetentionPeriod: 1209600     # Message Retention, 14 days
+      ReceiveMessageWaitTimeSeconds: 0    # 0 seconds = short poll
+
+  AfsSapPostToNsp:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: mp-ship-afssap-posttonsp
+      VisibilityTimeout: 300              # Visibility Timeout, 5 minutes
+      MessageRetentionPeriod: 1209600     # Message Retention, 14 days
+      ReceiveMessageWaitTimeSeconds: 0    # 0 seconds = short poll
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AfsSapPostToNspDlq.Arn
+        maxReceiveCount: 5

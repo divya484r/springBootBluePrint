@@ -1,0 +1,113 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Metadata": {
+    "AWS::CloudFormation::Designer": {
+      "df3567f6-42b5-4cc5-997e-5f39901ace9c": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 180,
+          "y": 100
+        },
+        "z": 0,
+        "embeds": []
+      },
+      "bcd07f3e-bb26-47a1-b52d-0c893154262a": {
+        "size": {
+          "width": 60,
+          "height": 60
+        },
+        "position": {
+          "x": 310,
+          "y": 100
+        },
+        "z": 0,
+        "embeds": [],
+        "isassociatedwith": [
+          "df3567f6-42b5-4cc5-997e-5f39901ace9c"
+        ],
+        "isrelatedto": [
+          "df3567f6-42b5-4cc5-997e-5f39901ace9c"
+        ]
+      },
+      "8047a6a7-caac-462d-9160-c0eccd0df012": {
+        "source": {
+          "id": "bcd07f3e-bb26-47a1-b52d-0c893154262a"
+        },
+        "target": {
+          "id": "df3567f6-42b5-4cc5-997e-5f39901ace9c"
+        },
+        "z": 1
+      }
+    }
+  },
+  "Resources": {
+    "ContinuousIntegration": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": "continuous-integration",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": [
+                  "arn:aws:iam::020484671131:root"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      },
+      "Metadata": {
+        "AWS::CloudFormation::Designer": {
+          "id": "df3567f6-42b5-4cc5-997e-5f39901ace9c"
+        }
+      }
+    },
+    "RolePolicies": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyName": "continuous-integration",
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ChangeMessageVisibility",
+                "sqs:ChangeMessageVisibilityBatch",
+                "sqs:CreateQueue",
+                "sqs:DeleteMessage",
+                "sqs:DeleteMessageBatch",
+                "sqs:DeleteQueue",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl",
+                "sqs:ListDeadLetterSourceQueues",
+                "sqs:ListQueues",
+                "sqs:PurgeQueue",
+                "sqs:ReceiveMessage",
+                "sqs:SendMessage",
+                "sqs:SendMessageBatch",
+                "sqs:SetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": "arn:aws:sqs:*:*:continuous_integration*"
+            }
+          ]
+        },
+        "Roles": [
+          {
+            "Ref": "ContinuousIntegration"
+          }
+        ]
+      }
+    }
+  }
+}

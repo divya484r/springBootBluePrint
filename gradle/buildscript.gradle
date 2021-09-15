@@ -1,0 +1,10 @@
+repositories {
+    maven {
+        credentials {
+            username 'maven'
+            password 'ludist'
+        }
+        url 'https://artifactory.com/artifactory/all-repos'
+    }
+}
+

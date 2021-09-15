@@ -1,0 +1,40 @@
+
+apply plugin: 'jacoco'
+
+configurations {
+    customConfig.extendsFrom implementation, testImplementation
+}
+
+jacoco {
+    toolVersion = "0.8.6"
+}
+
+
+jacocoTestReport {
+    reports {
+        xml.enabled true
+        html.enabled true
+        html.destination file("$buildDir/reports/jacoco")
+    }
+
+    afterEvaluate {
+        classDirectories.from = files(classDirectories.files.collect {
+            fileTree(dir: it,
+                    exclude: [
+                            '**/server/**',
+                            '**/phylon/**',
+                            '**/Application.*',
+                            '**/model/**',
+                            '**/configuration/**'
+                    ])
+        })
+    }
+}
+
+test {
+    jacoco {
+        destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
+        classDumpDir = file("$buildDir/jacoco/classpathdumps")
+    }
+    finalizedBy jacocoTestReport
+}
